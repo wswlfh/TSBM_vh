@@ -57,6 +57,7 @@ public class Start {
         //300000 10 10  3000*10*10*100 - 3332s
         //---------改进后-------
         //300000 5 10
+        System.out.println(metaDataSchema.size.get());
         System.exit(0);
 
     }
@@ -64,8 +65,8 @@ public class Start {
 
     public static void main(String[] args) {
 
-        //initThread();
+        initThread();
 
-        System.out.println(config.getBATCH_SIZE());
+        //System.out.println(config.getBATCH_SIZE());
     }
 }

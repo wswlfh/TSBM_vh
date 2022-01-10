@@ -33,7 +33,7 @@ public class ConsumerClient extends Client {
     }
 
     private void insertRecords(Batch batch) {
-
+        metaDataSchema.size.addAndGet(batch.getRecordList().size());
     }
 
 

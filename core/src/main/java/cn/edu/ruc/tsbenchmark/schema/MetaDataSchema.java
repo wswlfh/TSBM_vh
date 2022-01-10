@@ -5,20 +5,19 @@ import cn.edu.ruc.tsbenchmark.config.Config;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class MetaDataSchema {
     private static final Config config = Config.getInstance();
-
     private String[] tagNames;
     private int[] tagProportion;
 
     private final ConcurrentHashMap<Integer, Deque<String>> tagsMap = new ConcurrentHashMap<>();
-
-
     private final ConcurrentHashMap<Integer, Deque<String>> recordListMap = new ConcurrentHashMap<>();
-
     private String[] fieldTypes;
     private int[] fieldProportion;
+
+    public AtomicLong size = new AtomicLong();
 
     MetaDataSchema() {
         initTags();

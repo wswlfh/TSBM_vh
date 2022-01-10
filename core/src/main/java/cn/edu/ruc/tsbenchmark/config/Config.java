@@ -30,6 +30,8 @@ public class Config {
 
     private long TIME_END;
 
+    //生产线理论上所有数据记录条数
+    private long THEORETICAL_SIZE;
     //生产线能存放的合理容量
     private long REASONABLE_CAPACITY;
 
@@ -66,10 +68,12 @@ public class Config {
             this.TIME_END = Long.parseLong(properties.getProperty("TIME_END", ""));
 
             //队列中最多产生的batch数，每个batch有batchsize条record
-            REASONABLE_CAPACITY = ((TIME_END - TIME_START) / TIME_INTERVAL) * getTAG_TOTAL() / getBATCH_SIZE();
-            REASONABLE_CAPACITY = REASONABLE_CAPACITY > Integer.MAX_VALUE ?
+            THEORETICAL_SIZE = ((TIME_END - TIME_START) / TIME_INTERVAL) * getTAG_TOTAL() / getBATCH_SIZE();
+
+            //生产线合理容量为0.75最大容量
+            REASONABLE_CAPACITY = THEORETICAL_SIZE > Integer.MAX_VALUE ?
                     3L * Integer.MAX_VALUE / 4 :
-                    3L * REASONABLE_CAPACITY / 4;
+                    3L * THEORETICAL_SIZE / 4;
         } catch (NumberFormatException e) {
             System.out.println("GetProperty failed! please check the properties!");
             e.printStackTrace();
@@ -134,8 +138,12 @@ public class Config {
         return TIME_END;
     }
 
-    //取0.75最大容量
+
     public long getREASONABLE_CAPACITY() {
         return REASONABLE_CAPACITY;
+    }
+
+    public long getTHEORETICAL_SIZE() {
+        return THEORETICAL_SIZE;
     }
 }
