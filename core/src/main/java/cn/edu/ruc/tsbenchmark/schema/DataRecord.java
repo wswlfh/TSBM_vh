@@ -3,21 +3,23 @@ package cn.edu.ruc.tsbenchmark.schema;
 import java.util.LinkedHashMap;
 
 public class DataRecord {
+
     private final int ProduceId;
 
     private final long timeStamp;
 
     private final String tagString;
+    private String fieldString;
 
-    private final LinkedHashMap<String, String> fieldValues;
 
-
-    public DataRecord(int produceId, long timeStamp, String tagString, LinkedHashMap<String, String> fieldValues) {
+    public DataRecord(int produceId, long timeStamp, String tagString, String fieldSchema, Object[] fieldValues) {
         ProduceId = produceId;
         this.timeStamp = timeStamp;
         this.tagString = tagString;
-        this.fieldValues = fieldValues;
+
+        this.fieldString = String.format(fieldSchema, fieldValues);
     }
+
 
     public int getProduceId() {
         return ProduceId;
@@ -29,10 +31,6 @@ public class DataRecord {
 
     public String getTagString() {
         return tagString;
-    }
-
-    public LinkedHashMap<String, String> getFieldValues() {
-        return fieldValues;
     }
 
 

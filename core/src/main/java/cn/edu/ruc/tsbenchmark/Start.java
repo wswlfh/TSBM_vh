@@ -16,6 +16,7 @@ import java.util.concurrent.Executors;
 public class Start {
     private static final Config config = Config.getInstance();
     private static final MetaDataSchema metaDataSchema = MetaDataSchema.getInstance();
+
     private static final ProductQueue productQueue = ProductQueue.getInstance();
 
     private static void initThread() {
@@ -39,6 +40,7 @@ public class Start {
         for (Client client : clients) {
             executorService.submit(client);
         }
+
         executorService.shutdown();
         try {
             downLatch.await();
@@ -57,16 +59,21 @@ public class Start {
         //300000 10 10  3000*10*10*100 - 3332s
         //---------改进后-------
         //300000 5 10
-        System.out.println(metaDataSchema.size.get());
-        System.exit(0);
+
 
     }
 
 
     public static void main(String[] args) {
-
         initThread();
 
-        //System.out.println(config.getBATCH_SIZE());
+//        System.out.println(config.getTHEORETICAL_SIZE());
+//        System.out.println(metaDataSchema.size.get());
+//        System.out.println(config.getTHEORETICAL_SIZE() - metaDataSchema.size.get() + " " +
+//                 ((double)config.getTHEORETICAL_SIZE() / metaDataSchema.size.get())* 1000 / 1000);
+
+
+        System.exit(0);
+
     }
 }

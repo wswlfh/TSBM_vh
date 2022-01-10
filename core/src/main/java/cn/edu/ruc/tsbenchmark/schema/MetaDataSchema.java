@@ -5,24 +5,31 @@ import cn.edu.ruc.tsbenchmark.config.Config;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class MetaDataSchema {
     private static final Config config = Config.getInstance();
     private String[] tagNames;
     private int[] tagProportion;
-
     private final ConcurrentHashMap<Integer, Deque<String>> tagsMap = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<Integer, Deque<String>> recordListMap = new ConcurrentHashMap<>();
     private String[] fieldTypes;
     private int[] fieldProportion;
+    private String fieldSchema;
 
-    public AtomicLong size = new AtomicLong();
+
+    //public AtomicLong size = new AtomicLong();
+
+    private static class SchemaHolder {
+        private static final MetaDataSchema INSTANCE = new MetaDataSchema();
+    }
+
+    public static MetaDataSchema getInstance() {
+        return SchemaHolder.INSTANCE;
+    }
 
     MetaDataSchema() {
         initTags();
-        initFileds();
-        creatSchema();
+        initFields();
+        creatTagSchema();
     }
 
 
@@ -49,10 +56,11 @@ public class MetaDataSchema {
 
     }
 
-    private void initFileds() {
+    private void initFields() {
         int number = config.getFIELD_NUMBER();
         String[] proportions = config.getFIELD_PROPORTION().split(":");
         fieldProportion = new int[proportions.length];
+        fieldTypes = new String[config.getFIELD_NUMBER()];
         try {
             int sum = 0;
             for (int i = 0; i < proportions.length; i++) {
@@ -67,54 +75,45 @@ public class MetaDataSchema {
             System.out.println("Parameters about filed are not configured correctly");
             e.printStackTrace();
         }
-        fieldTypes = new String[number];
         int i = 0;
+        StringBuilder sb = new StringBuilder();
         for (int j = 0; j < proportions.length; j++) {
             String field;
-            if (j == 0) field = "Integer";
-            else if (j == 1) field = "Double";
-            else if (j == 2) field = "Long";
-            else if (j == 3) field = "Boolean";
-            else if (j == 4) field = "String";
+            if (j == 0) field = "I";
+            else if (j == 1) field = "D";
+            else if (j == 2) field = "L";
+            else if (j == 3) field = "B";
+            else if (j == 4) field = "S";
             else if (j == 5) field = "Date";
             else throw new IllegalArgumentException("Unsupported field type");
 
-
             for (int k = 0; k < Integer.parseInt(proportions[j]); k++) {
+                sb.append(field).append(k).append("=").append("%s,");
                 fieldTypes[i++] = field;
             }
         }
-
-
+        sb.deleteCharAt(sb.length() - 1);
+        fieldSchema = sb.toString();
     }
-
-    private static class SchemaHolder {
-        private static final MetaDataSchema INSTANCE = new MetaDataSchema();
-    }
-
-    public static MetaDataSchema getInstance() {
-        return SchemaHolder.INSTANCE;
-    }
-
 
     //采用 遍历0-时间线总数 的数index 模上各个tag的比例，得出对应值
-    private void creatSchema() {
+    private void creatTagSchema() {
         int total = config.getTAG_TOTAL();
         int per = total / config.getPRODUCER_NUMBER();
 
         for (int i = 0; i < config.getPRODUCER_NUMBER() - 1; i++) {
             tagsMap.put(i, new LinkedList<>());
             for (int j = i * per; j < i * per + per; j++)
-                tagsMap.get(i).add(getTagsString(j));
+                tagsMap.get(i).add(getTagValue(j));
         }
         //last Client
         tagsMap.put(config.getPRODUCER_NUMBER() - 1, new LinkedList<>());
         for (int i = (config.getPRODUCER_NUMBER() - 1) * per; i < total; i++) {
-            tagsMap.get(config.getPRODUCER_NUMBER() - 1).add(getTagsString(i));
+            tagsMap.get(config.getPRODUCER_NUMBER() - 1).add(getTagValue(i));
         }
     }
 
-    private String getTagsString(int index) {
+    private String getTagValue(int index) {
         String[] tagNames = getTagNames();
         int[] tagProportion = getTagProportion();
         int[] values = new int[tagProportion.length];
@@ -137,8 +136,8 @@ public class MetaDataSchema {
         return tagProportion;
     }
 
-    public String[] getFieldTypes() {
-        return fieldTypes;
+    public String getFieldSchema() {
+        return fieldSchema;
     }
 
     public int[] getFieldProportion() {
@@ -149,8 +148,7 @@ public class MetaDataSchema {
         return tagsMap;
     }
 
-    public ConcurrentHashMap<Integer, Deque<String>> getRecordListMap() {
-        return recordListMap;
+    public String[] getFieldTypes() {
+        return fieldTypes;
     }
-
 }

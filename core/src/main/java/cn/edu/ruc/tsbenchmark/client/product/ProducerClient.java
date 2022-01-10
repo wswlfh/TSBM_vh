@@ -29,31 +29,31 @@ public class ProducerClient extends Client {
     protected void execute() {
         ConcurrentHashMap<Integer, Deque<String>> tagsMap = metaDataSchema.getTagsMap();
         Deque<String> queue = tagsMap.get(this.id);
-
+        String fieldSchema = metaDataSchema.getFieldSchema();
         LinkedList<DataRecord> lists = new LinkedList<>();
-        long timeStamp = 0;
+        long timeStamp = timeStamp = config.getTIME_START() - config.getTIME_INTERVAL();
+        //生成随机值数组
+        ValueUtils.genRandom();
         while (!queue.isEmpty()) {
             //System.out.println(Thread.currentThread().getName() + " producer");
             String tagString = queue.pop();
-            LinkedHashMap<String, String> fieldValues = ValueUtils.getFieldValues(metaDataSchema.getFieldTypes());
+            for (int i = 0; i < config.getLOOP(); i++) {
+                timeStamp = Math.min(config.getTIME_END(), timeStamp + config.getTIME_INTERVAL());//防止取不到end
+                DataRecord record = new DataRecord(this.id, timeStamp, tagString, fieldSchema, ValueUtils.getRandomV(i));
 
-            for (long start = config.getTIME_START() - config.getTIME_INTERVAL();
-                 start <= config.getTIME_END();
-                 start += config.getTIME_INTERVAL()) {
-                timeStamp = Math.min(config.getTIME_END(), start + config.getTIME_INTERVAL());//防止取不到end
-                //构造batch
+            lists.add(record);
 
-                DataRecord record = new DataRecord(this.id, timeStamp, tagString, fieldValues);
-                lists.add(record);
-
-                if (lists.size() == config.getBATCH_SIZE()) {
-                    productQueue.put(new Batch(this.id, timeStamp, new LinkedList<>(lists)));
-                    lists.clear();
-                }
+            if (lists.size() == config.getBATCH_SIZE()) {
+                productQueue.put(new Batch(this.id, timeStamp, new LinkedList<>(lists)));
+                lists.clear();
             }
         }
-        if (lists.size() != 0)
-            productQueue.put(new Batch(this.id, timeStamp == 0 ? config.getTIME_END() : timeStamp, lists));
-        ProductStatus.setStatusById(this.id);
     }
+
+        if(lists.size()!=0)
+                productQueue.put(new
+
+    Batch(this.id, timeStamp ==0?config.getTIME_END() :timeStamp,lists));
+        ProductStatus.setStatusById(this.id);
+}
 }

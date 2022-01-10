@@ -24,11 +24,10 @@ public class Config {
     private String FIELD_PROPORTION;
 
     private long TIME_INTERVAL;
-
-
     private long TIME_START;
-
     private long TIME_END;
+
+    private int LOOP;
 
     //生产线理论上所有数据记录条数
     private long THEORETICAL_SIZE;
@@ -67,13 +66,13 @@ public class Config {
             this.TIME_START = Long.parseLong(properties.getProperty("TIME_START", ""));
             this.TIME_END = Long.parseLong(properties.getProperty("TIME_END", ""));
 
-            //队列中最多产生的batch数，每个batch有batchsize条record
-            THEORETICAL_SIZE = ((TIME_END - TIME_START) / TIME_INTERVAL) * getTAG_TOTAL() / getBATCH_SIZE();
-
-            //生产线合理容量为0.75最大容量
-            REASONABLE_CAPACITY = THEORETICAL_SIZE > Integer.MAX_VALUE ?
+            LOOP = (int) ((TIME_END - TIME_START) / TIME_INTERVAL);
+            THEORETICAL_SIZE = ((TIME_END - TIME_START) / TIME_INTERVAL) * getTAG_TOTAL();
+            //生产线中合理的的batch数，每个batch有batchsize条record，合理容量为0.75*最大容量
+            REASONABLE_CAPACITY = (THEORETICAL_SIZE > Integer.MAX_VALUE ?
                     3L * Integer.MAX_VALUE / 4 :
-                    3L * THEORETICAL_SIZE / 4;
+                    3L * THEORETICAL_SIZE / 4) / BATCH_SIZE;
+
         } catch (NumberFormatException e) {
             System.out.println("GetProperty failed! please check the properties!");
             e.printStackTrace();
@@ -145,5 +144,9 @@ public class Config {
 
     public long getTHEORETICAL_SIZE() {
         return THEORETICAL_SIZE;
+    }
+
+    public int getLOOP() {
+        return LOOP;
     }
 }
