@@ -2,7 +2,7 @@ package cn.edu.ruc.tsbenchmark.client.consumer;
 
 import cn.edu.ruc.tsbenchmark.client.Client;
 import cn.edu.ruc.tsbenchmark.config.Config;
-import cn.edu.ruc.tsbenchmark.queue.ProductQueue;
+import cn.edu.ruc.tsbenchmark.collection.ProductQueue;
 import cn.edu.ruc.tsbenchmark.schema.Batch;
 import cn.edu.ruc.tsbenchmark.schema.MetaDataSchema;
 

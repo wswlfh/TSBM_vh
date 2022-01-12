@@ -4,7 +4,7 @@ import cn.edu.ruc.tsbenchmark.client.Client;
 import cn.edu.ruc.tsbenchmark.client.consumer.ConsumerClient;
 import cn.edu.ruc.tsbenchmark.client.product.ProducerClient;
 import cn.edu.ruc.tsbenchmark.config.Config;
-import cn.edu.ruc.tsbenchmark.queue.ProductQueue;
+import cn.edu.ruc.tsbenchmark.collection.ProductQueue;
 import cn.edu.ruc.tsbenchmark.schema.MetaDataSchema;
 
 import java.util.LinkedList;
@@ -35,7 +35,7 @@ public class Start {
             clients.add(client);
         }
 
-        long start = System.nanoTime();
+        long start = System.currentTimeMillis();
 
         for (Client client : clients) {
             executorService.submit(client);
@@ -47,33 +47,16 @@ public class Start {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-        long end = System.nanoTime();
-
-        System.out.println((end - start) / 1000 / 1000 / 1000 + "s");
-
-        //30000 5 5  1000*5*5*10 - 251s
-        //30000 5 5  1000*5*5*100 - 291s
-        //30000 5 10  1000*5*10*100 - 294s
-        //30000 10 10  1000*10*10*100 - 305s
-        //30000 10 10  3000*10*10*100 - 332s
-        //300000 10 10  3000*10*10*100 - 3332s
-        //---------改进后-------
-        //300000 5 10
 
 
+        long end = System.currentTimeMillis();
+        System.out.println("The whole test process takes " + (end - start) / 1000 + "s");
     }
 
 
     public static void main(String[] args) {
         initThread();
 
-//        System.out.println(config.getTHEORETICAL_SIZE());
-//        System.out.println(metaDataSchema.size.get());
-//        System.out.println(config.getTHEORETICAL_SIZE() - metaDataSchema.size.get() + " " +
-//                 ((double)config.getTHEORETICAL_SIZE() / metaDataSchema.size.get())* 1000 / 1000);
-
-
         System.exit(0);
-
     }
 }

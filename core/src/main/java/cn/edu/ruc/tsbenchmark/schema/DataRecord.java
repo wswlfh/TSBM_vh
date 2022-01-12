@@ -5,19 +5,16 @@ import java.util.LinkedHashMap;
 public class DataRecord {
 
     private final int ProduceId;
-
     private final long timeStamp;
-
     private final String tagString;
-    private String fieldString;
+    private final String fieldString;
 
 
-    public DataRecord(int produceId, long timeStamp, String tagString, String fieldSchema, Object[] fieldValues) {
+    public DataRecord(int produceId, long timeStamp, String tagString, String fieldString) {
         ProduceId = produceId;
         this.timeStamp = timeStamp;
         this.tagString = tagString;
-
-        this.fieldString = String.format(fieldSchema, fieldValues);
+        this.fieldString = fieldString;
     }
 
 
@@ -31,6 +28,10 @@ public class DataRecord {
 
     public String getTagString() {
         return tagString;
+    }
+
+    public String getFieldString() {
+        return fieldString;
     }
 
 

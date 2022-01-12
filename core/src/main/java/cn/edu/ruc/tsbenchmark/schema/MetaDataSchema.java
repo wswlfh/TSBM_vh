@@ -11,7 +11,7 @@ public class MetaDataSchema {
     private String[] tagNames;
     private int[] tagProportion;
     private final ConcurrentHashMap<Integer, Deque<String>> tagsMap = new ConcurrentHashMap<>();
-    private String[] fieldTypes;
+    private int[] fieldTypes; //0:Integer  1:Double  2:Long  3:Boolean  4:String  5:Date
     private int[] fieldProportion;
     private String fieldSchema;
 
@@ -60,7 +60,7 @@ public class MetaDataSchema {
         int number = config.getFIELD_NUMBER();
         String[] proportions = config.getFIELD_PROPORTION().split(":");
         fieldProportion = new int[proportions.length];
-        fieldTypes = new String[config.getFIELD_NUMBER()];
+        fieldTypes = new int[config.getFIELD_NUMBER()];
         try {
             int sum = 0;
             for (int i = 0; i < proportions.length; i++) {
@@ -89,7 +89,7 @@ public class MetaDataSchema {
 
             for (int k = 0; k < Integer.parseInt(proportions[j]); k++) {
                 sb.append(field).append(k).append("=").append("%s,");
-                fieldTypes[i++] = field;
+                fieldTypes[i++] = j;
             }
         }
         sb.deleteCharAt(sb.length() - 1);
@@ -148,7 +148,7 @@ public class MetaDataSchema {
         return tagsMap;
     }
 
-    public String[] getFieldTypes() {
+    public int[] getFieldTypes() {
         return fieldTypes;
     }
 }

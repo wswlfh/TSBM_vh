@@ -1,10 +1,11 @@
-package cn.edu.ruc.tsbenchmark.queue;
+package cn.edu.ruc.tsbenchmark.collection;
 
 import cn.edu.ruc.tsbenchmark.client.product.ProductStatus;
 import cn.edu.ruc.tsbenchmark.config.Config;
 import cn.edu.ruc.tsbenchmark.schema.Batch;
 
 import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -25,7 +26,7 @@ public class ProductQueue extends PriorityBlockingQueue<Batch> {
     //private final static int factor = 10000;
 
 
-    public ProductQueue() {
+     private ProductQueue() {
         super((int) config.getREASONABLE_CAPACITY(), (o1, o2) -> {
             if (o1.getProduceId() == o2.getProduceId())
                 return o1.getTimeStamp() < o2.getTimeStamp() ? -1 : 1;
@@ -80,7 +81,7 @@ public class ProductQueue extends PriorityBlockingQueue<Batch> {
             while (count.get() == 0) {
                 if (ProductStatus.isProductDone())
                     return new Batch(true);
-                notEmpty.await();
+                notEmpty.await(100, TimeUnit.MICROSECONDS);
             }
             x = super.take();
             c = count.getAndDecrement();
