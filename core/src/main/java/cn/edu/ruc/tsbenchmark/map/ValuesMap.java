@@ -2,6 +2,7 @@ package cn.edu.ruc.tsbenchmark.map;
 
 import cn.edu.ruc.tsbenchmark.config.Config;
 import cn.edu.ruc.tsbenchmark.schema.MetaDataSchema;
+import cn.edu.ruc.tsbenchmark.utils.DateUtils;
 
 import java.sql.Date;
 import java.sql.Timestamp;
@@ -12,32 +13,21 @@ import java.util.concurrent.atomic.AtomicLong;
 public class ValuesMap extends ConcurrentHashMap<Integer, String> {
     private static final Config config = Config.getInstance();
     private static final int[] fieldTypes = MetaDataSchema.getInstance().getFieldTypes();
-    private static final int capacity = 10000000;
+    private static final int capacity = Math.min((int) (config.getTHEORETICAL_SIZE() / 6000), 10000000);
 
     private ValuesMap() {
         super(capacity);
-        System.out.println("Start randomly generating values and insert them into the valuesMap.............\n");
+        System.out.println(DateUtils.getDate() + " Start Continuously generate" + capacity + " pieces of random values and insert them into the valuesMap.............\n");
         long start = System.currentTimeMillis();
-        AtomicLong t1 = new AtomicLong(0);
-        AtomicLong t2 = new AtomicLong(0);
-        new Thread(() -> {
-            for (int i = 0; i < capacity / 2; i++) {
-                this.put(i, getRandomV().toString());
+        Thread t = new Thread(() -> {
+            for (int i = 0; i < capacity; i++) {
+                this.put(i, getRandomV());
             }
-            t1.set(System.currentTimeMillis());
-            if (t2.get() != 0 && t1.get() > t2.get())
-                System.out.println("A total of " + capacity + " random values are inserted,it takes a total of " +
-                        (System.currentTimeMillis() - start) / 1000 + "s");
-        }).start();
-        new Thread(() -> {
-            for (int i = capacity / 2; i < capacity; i++) {
-                this.put(i, getRandomV().toString());
-            }
-            t2.set(System.currentTimeMillis());
-            if (t1.get() != 0 && t2.get() > t1.get())
-                System.out.println("A total of " + capacity + " random values are inserted,it takes a total of " +
-                        (System.currentTimeMillis() - start) / 1000 + " s");
-        }).start();
+            System.out.println(DateUtils.getDate() + " A total of " + capacity + " random values are inserted,it takes a total of " +
+                    (System.currentTimeMillis() - start) / 1000 + "s");
+        });
+        t.setPriority(7);
+        t.start();
     }
 
     private static class ValuesMapsHolder {
@@ -52,11 +42,11 @@ public class ValuesMap extends ConcurrentHashMap<Integer, String> {
     public String get(Integer key) {
         int newKey = Math.abs((key.hashCode() - key + getIntByRandom()) % capacity);
         if (!containsKey(newKey))
-            this.put(newKey, getRandomV().toString());
+            this.put(newKey, getRandomV());
         return super.get(newKey);
     }
 
-    private static StringBuilder getRandomV() {
+    private static String getRandomV() {
         Object[] values = new Object[config.getFIELD_NUMBER()];
         StringBuilder sb = new StringBuilder();
         int i = 0, d = 0, l = 0, b = 0, s = 0, date = 0;
@@ -74,7 +64,7 @@ public class ValuesMap extends ConcurrentHashMap<Integer, String> {
             else if (fieldTypes[k] == 5)
                 sb.append("date").append(date++).append('=').append(getDateByRandom()).append(',');
         }
-        return sb;
+        return sb.toString();
     }
 
     private static double getDoubleByRandom(int index) {
@@ -131,6 +121,5 @@ public class ValuesMap extends ConcurrentHashMap<Integer, String> {
 //            System.out.println();
 //        }
         getInstance();
-
     }
 }

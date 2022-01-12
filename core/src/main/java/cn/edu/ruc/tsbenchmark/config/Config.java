@@ -68,6 +68,7 @@ public class Config {
 
             LOOP = (int) ((TIME_END - TIME_START) / TIME_INTERVAL);
             THEORETICAL_SIZE = ((TIME_END - TIME_START) / TIME_INTERVAL) * getTAG_TOTAL();
+
             //生产线中合理的的batch数，每个batch有batchsize条record，合理容量为0.75*最大容量
             REASONABLE_CAPACITY = (THEORETICAL_SIZE > Integer.MAX_VALUE ?
                     3L * Integer.MAX_VALUE / 4 :
