@@ -7,14 +7,17 @@ public class DataRecord {
     private final int ProduceId;
     private final long timeStamp;
     private final String tagString;
-    private final String fieldString;
+    //private final String fieldString;
+    private final Object[] fieldsValue;
 
 
-    public DataRecord(int produceId, long timeStamp, String tagString, String fieldString) {
+
+    public DataRecord(int produceId, long timeStamp, String tagString, Object[] fieldsValue) {
         ProduceId = produceId;
         this.timeStamp = timeStamp;
         this.tagString = tagString;
-        this.fieldString = fieldString;
+        this.fieldsValue = fieldsValue;
+        //this.fieldString = fieldString;
     }
 
 
@@ -30,9 +33,7 @@ public class DataRecord {
         return tagString;
     }
 
-    public String getFieldString() {
-        return fieldString;
+    public Object[] getFieldsValue() {
+        return fieldsValue;
     }
-
-
 }

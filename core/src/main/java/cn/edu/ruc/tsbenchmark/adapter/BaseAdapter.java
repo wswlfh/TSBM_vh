@@ -1,25 +1,41 @@
 package cn.edu.ruc.tsbenchmark.adapter;
+import cn.edu.ruc.tsbenchmark.config.Config;
+import cn.edu.ruc.tsbenchmark.schema.Batch;
 
-
-/**
- * adapter base interface
- * 适配器基础类
- */
 public interface BaseAdapter {
-    public void initConnect(String ip, String port, String user, String password);
     /**
-     * @return timeout ,if request failed, please return -1;
+     * Adapter for database IO.
+     *
+     * @author Shengwei Huang, wswlfh@163.com
+     *
      */
-    public long insertData(String data);
 
-    public long query1(long start, long end);
+    public static final Config config = Config.getInstance();
+    /**
+     * Initialize database connection
+     */
+    public void initConnect();
 
-    public long query2(long start, long end, double value);
 
-    public long query3(long start, long end);
 
-    public long query4(long start, long end);
+    /**
+     * Insert a batch of data and calculate the cost time
+     *
+     * @return timeout, if request failed, please return -1;
+     */
+    public long insertData(Batch data);
 
-    public long query5(long start, long end);
+
+    public void closeConnection();
+
+//    public long query1(long start, long end);
+//
+//    public long query2(long start, long end, double value);
+//
+//    public long query3(long start, long end);
+//
+//    public long query4(long start, long end);
+//
+//    public long query5(long start, long end);
 }
 

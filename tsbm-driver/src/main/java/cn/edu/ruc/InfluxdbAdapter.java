@@ -2,6 +2,7 @@ package cn.edu.ruc;
 
 import cn.edu.ruc.adapter.BaseAdapter;
 import cn.edu.ruc.start.TSBM;
+import cn.edu.ruc.tsbenchmark.adapter.BaseAdapter;
 import okhttp3.*;
 import org.influxdb.InfluxDBFactory;
 import org.influxdb.dto.Query;

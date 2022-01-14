@@ -1,18 +1,17 @@
 package cn.edu.ruc.tsbenchmark.schema;
 
+import java.util.LinkedList;
 import java.util.List;
 
 public class Batch {
     private final int ProduceId;
-
-
     private final boolean isEmpty;
     private final long timeStamp;
 
-    private final List<DataRecord> recordList;
+    private final LinkedList<DataRecord> recordList;
 
 
-    public Batch(int produceId, long timeStamp, List<DataRecord> recordList) {
+    public Batch(int produceId, long timeStamp, LinkedList<DataRecord> recordList) {
         ProduceId = produceId;
         this.timeStamp = timeStamp;
         //this.recordList = new LinkedList<>(recordList);
@@ -42,7 +41,7 @@ public class Batch {
         return timeStamp;
     }
 
-    public List<DataRecord> getRecordList() {
+    public LinkedList<DataRecord> getRecordList() {
         return recordList;
     }
 }

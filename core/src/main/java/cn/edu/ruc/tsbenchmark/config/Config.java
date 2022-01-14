@@ -7,6 +7,9 @@ import java.io.InputStream;
 import java.util.Properties;
 
 public class Config {
+
+    private final Properties properties;
+
     private int PRODUCER_NUMBER;
     private int CONSUMER_NUMBER;
 
@@ -34,6 +37,7 @@ public class Config {
     //生产线能存放的合理容量
     private long REASONABLE_CAPACITY;
 
+
     Config() {
         InputStream inputStream = null;
         try {
@@ -41,7 +45,7 @@ public class Config {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-        Properties properties = new Properties();
+        properties = new Properties();
         try {
             properties.load(inputStream);
         } catch (IOException e) {
@@ -73,6 +77,7 @@ public class Config {
             REASONABLE_CAPACITY = (THEORETICAL_SIZE > Integer.MAX_VALUE ?
                     3L * Integer.MAX_VALUE / 4 :
                     3L * THEORETICAL_SIZE / 4) / BATCH_SIZE;
+
 
         } catch (NumberFormatException e) {
             System.out.println("GetProperty failed! please check the properties!");
@@ -149,5 +154,9 @@ public class Config {
 
     public int getLOOP() {
         return LOOP;
+    }
+
+    public Properties getProperties() {
+        return properties;
     }
 }

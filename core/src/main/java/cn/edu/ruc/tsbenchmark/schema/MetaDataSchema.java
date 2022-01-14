@@ -13,7 +13,7 @@ public class MetaDataSchema {
     private final ConcurrentHashMap<Integer, Deque<String>> tagsMap = new ConcurrentHashMap<>();
     private int[] fieldTypes; //0:Integer  1:Double  2:Long  3:Boolean  4:String  5:Date
     private int[] fieldProportion;
-    private String fieldSchema;
+    private String[] fieldSchema;
 
 
     //public AtomicLong size = new AtomicLong();
@@ -61,6 +61,7 @@ public class MetaDataSchema {
         String[] proportions = config.getFIELD_PROPORTION().split(":");
         fieldProportion = new int[proportions.length];
         fieldTypes = new int[config.getFIELD_NUMBER()];
+        fieldSchema = new String[config.getFIELD_NUMBER()];
         try {
             int sum = 0;
             for (int i = 0; i < proportions.length; i++) {
@@ -76,7 +77,6 @@ public class MetaDataSchema {
             e.printStackTrace();
         }
         int i = 0;
-        StringBuilder sb = new StringBuilder();
         for (int j = 0; j < proportions.length; j++) {
             String field;
             if (j == 0) field = "I";
@@ -88,12 +88,12 @@ public class MetaDataSchema {
             else throw new IllegalArgumentException("Unsupported field type");
 
             for (int k = 0; k < Integer.parseInt(proportions[j]); k++) {
-                sb.append(field).append(k).append("=").append("%s,");
-                fieldTypes[i++] = j;
+                fieldSchema[i] = field + "" + k;
+                fieldTypes[i] = j;
+                i++;
             }
         }
-        sb.deleteCharAt(sb.length() - 1);
-        fieldSchema = sb.toString();
+
     }
 
     //采用 遍历0-时间线总数 的数index 模上各个tag的比例，得出对应值
@@ -136,7 +136,7 @@ public class MetaDataSchema {
         return tagProportion;
     }
 
-    public String getFieldSchema() {
+    public String[] getFieldSchema() {
         return fieldSchema;
     }
 

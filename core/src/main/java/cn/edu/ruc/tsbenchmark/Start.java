@@ -3,8 +3,9 @@ package cn.edu.ruc.tsbenchmark;
 import cn.edu.ruc.tsbenchmark.client.Client;
 import cn.edu.ruc.tsbenchmark.client.consumer.ConsumerClient;
 import cn.edu.ruc.tsbenchmark.client.product.ProducerClient;
-import cn.edu.ruc.tsbenchmark.config.Config;
 import cn.edu.ruc.tsbenchmark.collection.ProductQueue;
+import cn.edu.ruc.tsbenchmark.config.Config;
+import cn.edu.ruc.tsbenchmark.result.Result;
 import cn.edu.ruc.tsbenchmark.schema.MetaDataSchema;
 
 import java.util.LinkedList;
@@ -23,9 +24,10 @@ public class Start {
         ExecutorService executorService = Executors.newFixedThreadPool(
                 config.getPRODUCER_NUMBER() + config.getCONSUMER_NUMBER());
 
-        CountDownLatch downLatch = new CountDownLatch(config.getPRODUCER_NUMBER());
-        CyclicBarrier barrier = new CyclicBarrier(config.getPRODUCER_NUMBER());
+        CountDownLatch downLatch = new CountDownLatch(config.getPRODUCER_NUMBER() + config.getCONSUMER_NUMBER());
+        CyclicBarrier barrier = new CyclicBarrier(config.getPRODUCER_NUMBER() + config.getCONSUMER_NUMBER());
         LinkedList<Client> clients = new LinkedList<>();
+
         for (int i = 0; i < config.getPRODUCER_NUMBER(); i++) {
             Client client = new ProducerClient(i, downLatch, barrier);
             clients.add(client);
@@ -47,16 +49,22 @@ public class Start {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-
-
         long end = System.currentTimeMillis();
-        System.out.println("The whole test process takes " + (end - start) / 1000 + "s");
+        Result.putResult("The whole test process takes ", (end - start) / 1000 + "s");
     }
 
 
     public static void main(String[] args) {
+        Result.putResult("PRODUCER_NUMBER",config.getPRODUCER_NUMBER()+"");
+        Result.putResult("CONSUMER_NUMBER",config.getCONSUMER_NUMBER()+"");
+        Result.putResult("Number of time series", config.getTAG_TOTAL() + "");
+        Result.putResult("Number of time tag", metaDataSchema.getTagNames().length + "");
+        Result.putResult("Number of time field", metaDataSchema.getFieldSchema().length + "");
+        Result.putResult("Number of theoretical insert records", config.getTHEORETICAL_SIZE() + "");
+
         initThread();
 
+        Result.printResult();
         System.exit(0);
     }
 }

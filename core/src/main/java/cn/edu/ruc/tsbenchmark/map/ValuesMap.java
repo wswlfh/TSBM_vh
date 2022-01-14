@@ -8,20 +8,21 @@ import java.sql.Date;
 import java.sql.Timestamp;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.atomic.AtomicLong;
 
-public class ValuesMap extends ConcurrentHashMap<Integer, String> {
+public class ValuesMap extends ConcurrentHashMap<Integer, Object[]> {
     private static final Config config = Config.getInstance();
     private static final int[] fieldTypes = MetaDataSchema.getInstance().getFieldTypes();
-    private static final int capacity = Math.min((int) (config.getTHEORETICAL_SIZE() / 6000), 10000000);
+    private static final int capacity = Math.min((int) (config.getTHEORETICAL_SIZE() / 60), 10000000);
 
     private ValuesMap() {
         super(capacity);
-        System.out.println(DateUtils.getDate() + " Start Continuously generate" + capacity + " pieces of random values and insert them into the valuesMap.............\n");
+        System.out.println(DateUtils.getDate() + " Start Continuously generate " + capacity + " pieces of random values and insert them into the valuesMap.............\n");
         long start = System.currentTimeMillis();
         Thread t = new Thread(() -> {
+            //AtomicReference<String> s = new AtomicReference<>();
             for (int i = 0; i < capacity; i++) {
-                this.put(i, getRandomV());
+                //s.set(getRandomV());
+                this.put(i, getArrayRandomV());
             }
             System.out.println(DateUtils.getDate() + " A total of " + capacity + " random values are inserted,it takes a total of " +
                     (System.currentTimeMillis() - start) / 1000 + "s");
@@ -39,18 +40,17 @@ public class ValuesMap extends ConcurrentHashMap<Integer, String> {
     }
 
 
-    public String get(Integer key) {
+    public Object[] get(Integer key) {
         int newKey = Math.abs((key.hashCode() - key + getIntByRandom()) % capacity);
         if (!containsKey(newKey))
-            this.put(newKey, getRandomV());
+            this.put(newKey, getArrayRandomV());
         return super.get(newKey);
     }
 
-    private static String getRandomV() {
-        Object[] values = new Object[config.getFIELD_NUMBER()];
+    private static String getStringRandomV() {
         StringBuilder sb = new StringBuilder();
         int i = 0, d = 0, l = 0, b = 0, s = 0, date = 0;
-        for (int k = 0; k < values.length; k++) {
+        for (int k = 0; k < config.getFIELD_NUMBER(); k++) {
             if (fieldTypes[k] == 0)
                 sb.append("i").append(i++).append('=').append(getIntByRandom()).append(',');
             else if (fieldTypes[k] == 1)
@@ -64,7 +64,27 @@ public class ValuesMap extends ConcurrentHashMap<Integer, String> {
             else if (fieldTypes[k] == 5)
                 sb.append("date").append(date++).append('=').append(getDateByRandom()).append(',');
         }
+        sb.deleteCharAt(sb.length() - 1);
         return sb.toString();
+    }
+
+    private static Object[] getArrayRandomV() {
+        Object[] values = new Object[config.getFIELD_NUMBER()];
+        for (int k = 0; k < values.length; k++) {
+            if (fieldTypes[k] == 0)
+                values[k] = getIntByRandom();
+            else if (fieldTypes[k] == 1)
+                values[k] = getDoubleByRandom(k);
+            else if (fieldTypes[k] == 2)
+                values[k] = getLongByRandom();
+            else if (fieldTypes[k] == 3)
+                values[k] = getBooleanByRandom();
+            else if (fieldTypes[k] == 4)
+                values[k] = getStringByRandom();
+            else if (fieldTypes[k] == 5)
+                values[k] = getDateByRandom();
+        }
+        return values;
     }
 
     private static double getDoubleByRandom(int index) {

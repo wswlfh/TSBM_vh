@@ -1,9 +1,19 @@
 package cn.edu.ruc.tsbenchmark.client;
 
+import cn.edu.ruc.tsbenchmark.collection.ProductQueue;
+import cn.edu.ruc.tsbenchmark.config.Config;
+import cn.edu.ruc.tsbenchmark.map.ValuesMap;
+import cn.edu.ruc.tsbenchmark.schema.MetaDataSchema;
+
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 
 public abstract class Client implements Runnable {
+    protected static final Config config = Config.getInstance();
+    protected static final MetaDataSchema metaDataSchema = MetaDataSchema.getInstance();
+    protected static final ProductQueue productQueue = ProductQueue.getInstance();
+    protected static final ValuesMap valuesMap = ValuesMap.getInstance();
+
     public final int id;
     private final CountDownLatch countDownLatch;
     private final CyclicBarrier barrier;
