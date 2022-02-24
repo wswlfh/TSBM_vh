@@ -2,6 +2,7 @@ package cn.edu.ruc.tsbenchmark.schema;
 
 import cn.edu.ruc.tsbenchmark.config.Config;
 
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.concurrent.ConcurrentHashMap;
@@ -10,13 +11,14 @@ public class MetaDataSchema {
     private static final Config config = Config.getInstance();
     private String[] tagNames;
     private int[] tagProportion;
-    private final ConcurrentHashMap<Integer, Deque<String>> tagsMap = new ConcurrentHashMap<>();
+    private final ArrayList<String> tagsList = new ArrayList<>();
+    private final ArrayList<Long> timestampList = new ArrayList<>();
+    private boolean[][] timeSeriesTable;
+    private final ConcurrentHashMap<Integer, Deque<Batch>> productMean = new ConcurrentHashMap<>();
     private int[] fieldTypes; //0:Integer  1:Double  2:Long  3:Boolean  4:String  5:Date
     private int[] fieldProportion;
     private String[] fieldSchema;
 
-
-    //public AtomicLong size = new AtomicLong();
 
     private static class SchemaHolder {
         private static final MetaDataSchema INSTANCE = new MetaDataSchema();
@@ -29,7 +31,8 @@ public class MetaDataSchema {
     MetaDataSchema() {
         initTags();
         initFields();
-        creatTagSchema();
+        initTimeSeriesTable();
+        allocateToProductClient();
     }
 
 
@@ -51,8 +54,20 @@ public class MetaDataSchema {
         } catch (Exception e) {
             System.out.println("Parameters about tag are not configured correctly");
             e.printStackTrace();
+            System.exit(-1);
         }
         tagNames = names;
+
+        //创建tag的schema
+        for (int i = 0; i < config.getTAG_TOTAL(); i++) {
+            tagsList.add(getTagValue(i));
+        }
+
+        //创建时间戳序列
+        for (long start = config.getTIME_START() - config.getTIME_INTERVAL(); start < config.getTIME_END(); ) {
+            start = Math.min(config.getTIME_END(), start + config.getTIME_INTERVAL());
+            timestampList.add(start);
+        }
 
     }
 
@@ -93,24 +108,38 @@ public class MetaDataSchema {
                 i++;
             }
         }
-
     }
 
-    //采用 遍历0-时间线总数 的数index 模上各个tag的比例，得出对应值
-    private void creatTagSchema() {
-        int total = config.getTAG_TOTAL();
-        int per = total / config.getPRODUCER_NUMBER();
+    //初始化时序表：以Map形式存储时间戳-节点布尔二维矩阵
+    private void initTimeSeriesTable() {
+        //由于java语言特性，这里timeSeriesTable中为false的代表该时间戳-节点有效
+        //type0: 全为false
+        timeSeriesTable = new boolean[timestampList.size()][tagsList.size()];
+    }
 
-        for (int i = 0; i < config.getPRODUCER_NUMBER() - 1; i++) {
-            tagsMap.put(i, new LinkedList<>());
-            for (int j = i * per; j < i * per + per; j++)
-                tagsMap.get(i).add(getTagValue(j));
+
+    //按照生产线程id，分配指定的每个客户端的生产的batch批次，
+    private void allocateToProductClient() {
+        long startIndex = 0, endIndex = 0;
+        int batchId = 0, pId = 0;
+        for (int i = 0; i < timestampList.size(); i++) {
+            for (int j = 0; j < tagsList.size(); j++) {
+                if (timeSeriesTable[i][j]) continue;
+                if ((endIndex + 1) % config.getBATCH_SIZE() == 0) {
+                    pId = batchId % config.getPRODUCER_NUMBER();
+                    Deque<Batch> batchDeque = productMean.getOrDefault(pId, new LinkedList<>());
+                    batchDeque.add(new Batch(pId, batchId, startIndex, endIndex));
+                    productMean.put(pId, batchDeque);
+                    startIndex = endIndex + 1;
+                    batchId++;
+                }
+                endIndex++;
+            }
         }
-        //last Client
-        tagsMap.put(config.getPRODUCER_NUMBER() - 1, new LinkedList<>());
-        for (int i = (config.getPRODUCER_NUMBER() - 1) * per; i < total; i++) {
-            tagsMap.get(config.getPRODUCER_NUMBER() - 1).add(getTagValue(i));
-        }
+        //剩余的组成一个batch添加
+        if (startIndex != endIndex)
+            productMean.get(pId).add(new Batch(pId, batchId, startIndex, endIndex));
+        System.out.println();
     }
 
     private String getTagValue(int index) {
@@ -144,8 +173,8 @@ public class MetaDataSchema {
         return fieldProportion;
     }
 
-    public ConcurrentHashMap<Integer, Deque<String>> getTagsMap() {
-        return tagsMap;
+    public ArrayList<String> getTagsList() {
+        return tagsList;
     }
 
     public int[] getFieldTypes() {

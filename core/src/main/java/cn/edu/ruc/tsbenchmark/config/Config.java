@@ -74,10 +74,9 @@ public class Config {
             THEORETICAL_SIZE = ((TIME_END - TIME_START) / TIME_INTERVAL) * getTAG_TOTAL();
 
             //生产线中合理的的batch数，每个batch有batchsize条record，合理容量为0.75*最大容量
-            REASONABLE_CAPACITY = (THEORETICAL_SIZE > Integer.MAX_VALUE ?
+            REASONABLE_CAPACITY = Math.max((THEORETICAL_SIZE > Integer.MAX_VALUE ?
                     3L * Integer.MAX_VALUE / 4 :
-                    3L * THEORETICAL_SIZE / 4) / BATCH_SIZE;
-
+                    3L * THEORETICAL_SIZE / 4) / BATCH_SIZE, THEORETICAL_SIZE);
 
         } catch (NumberFormatException e) {
             System.out.println("GetProperty failed! please check the properties!");

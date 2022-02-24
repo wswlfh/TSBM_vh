@@ -6,6 +6,7 @@ import cn.edu.ruc.tsbenchmark.schema.DataRecord;
 import okhttp3.OkHttpClient;
 import org.influxdb.InfluxDB;
 import org.influxdb.InfluxDBFactory;
+import org.influxdb.InfluxDBIOException;
 import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
 
@@ -25,11 +26,20 @@ public class InfluxDBAdapter extends Adapter {
         //connection
         String url = "http://" + InfluxInfo.IP + ":" + InfluxInfo.PORT;
         OkHttpClient.Builder builder = new OkHttpClient().newBuilder()
-                .readTimeout(50000, TimeUnit.MILLISECONDS)
+                .readTimeout(500000, TimeUnit.MILLISECONDS)
                 .connectTimeout(50000, TimeUnit.MILLISECONDS)
-                .writeTimeout(50000, TimeUnit.MILLISECONDS);
+                .writeTimeout(500000, TimeUnit.MILLISECONDS);
 
         influxDB = InfluxDBFactory.connect(url, InfluxInfo.USERNAME, InfluxInfo.PASSWORD, builder);
+
+        //ping test
+        try {
+            influxDB.ping();
+        } catch (InfluxDBIOException e) {
+            e.printStackTrace();
+            System.out.println("Influxdb connect failed!");
+            System.exit(-1);
+        }
 
         //setDatabase
         if (!influxDB.databaseExists(InfluxInfo.DATABASE)) {
@@ -43,62 +53,10 @@ public class InfluxDBAdapter extends Adapter {
                     InfluxInfo.DATABASE, InfluxInfo.DURATION, InfluxInfo.SHARD_DURATION,
                     Integer.parseInt(InfluxInfo.REPLICATION), false);
 
-        //ping test
-        try {
-            if (influxDB.ping() == null)
-                throw new Exception("InfluxDB connection failed!");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+
     }
 
-    //    @Override
-//    public long insertData(Batch data) {
-//        if (data.isEmpty())
-//            return -1;
-//        //pre
-//        String[] fieldSchema = metaDataSchema.getFieldSchema();
-//        LinkedList<DataRecord> recordList = data.getRecordList();
-//        LinkedHashMap<String, String> tagMap = new LinkedHashMap<>();
-//        LinkedHashMap<String, Object> fieldsMap = new LinkedHashMap<>();
-//        BatchPoints batchPoints = BatchPoints.database(InfluxInfo.DATABASE).build();
-//        //take
-//        while (!recordList.isEmpty()) {
-//            DataRecord record = recordList.removeFirst();
-//            //time
-//            long timeStamp = record.getTimeStamp();
-//            //tag
-//            String[] split = record.getTagString().split(",");
-//            for (String expression : split) {
-//                String[] entry = expression.split("=");
-//                tagMap.put(entry[0], entry[1]);
-//            }
-//            //field
-//            Object[] fieldsValue = record.getFieldsValue();
-//            for (int i = 0; i < fieldsValue.length; i++)
-//                fieldsMap.put(fieldSchema[i], fieldsValue[i]);
-//
-//            influxDB.write(Point.measurement("ruc_test")
-//                    //.time(timeStamp, TimeUnit.MILLISECONDS)
-//                    .tag(new LinkedHashMap<>(tagMap))
-//                    .fields(new LinkedHashMap<>(fieldsMap)).build());
-//
-//            //write batchPoints
-////            batchPoints.point(Point.measurement("ruc_test")
-////                    //.time(timeStamp, TimeUnit.MILLISECONDS)
-////                    .tag(new LinkedHashMap<>(tagMap))
-////                    .fields(new LinkedHashMap<>(fieldsMap)).build());
-//
-//            tagMap.clear();
-//            fieldsMap.clear();
-//        }
-//
-//        //calculate
-//        long start = System.currentTimeMillis();
-//        //influxDB.write(batchPoints);
-//        long end = System.currentTimeMillis();
-//        return end - start;
-//    }
+
     @Override
     public long insertData(Batch data) {
         if (data.isEmpty())
@@ -119,7 +77,16 @@ public class InfluxDBAdapter extends Adapter {
             //field
             Object[] fieldsValue = record.getFieldsValue();
             for (int i = 0; i < fieldsValue.length; i++) {
-                insertQL.append(fieldSchema[i]).append('=').append(fieldsValue[i]).append(',');
+                insertQL.append(fieldSchema[i]).append('=');
+                if (fieldsValue[i] instanceof Integer)
+                    insertQL.append(fieldsValue[i]).append('i');
+                else if (fieldsValue[i] instanceof String)
+                    insertQL.append('"').append(fieldsValue[i]).append('"');
+                else if (fieldsValue[i] instanceof Double || fieldsValue[i] instanceof Boolean)
+                    insertQL.append(fieldsValue[i]);
+                else throw new IllegalArgumentException("Datatype unsupported in incluxdb");
+                insertQL.append(',');
+
             }
             //time 先去掉最后一个逗号
             insertQL.deleteCharAt(insertQL.length() - 1);

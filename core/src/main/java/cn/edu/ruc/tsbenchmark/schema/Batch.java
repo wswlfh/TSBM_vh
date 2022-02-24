@@ -1,44 +1,54 @@
 package cn.edu.ruc.tsbenchmark.schema;
 
 import java.util.LinkedList;
-import java.util.List;
 
 public class Batch {
-    private final int ProduceId;
+    private final int id;
+    private final int producerId;
+    private final long startIndex;
+    private final long endIndex;
+
     private final boolean isEmpty;
-    private final long timeStamp;
 
-    private final LinkedList<DataRecord> recordList;
+    private LinkedList<DataRecord> recordList;
 
 
-    public Batch(int produceId, long timeStamp, LinkedList<DataRecord> recordList) {
-        ProduceId = produceId;
-        this.timeStamp = timeStamp;
-        //this.recordList = new LinkedList<>(recordList);
-        this.recordList = recordList;
+    public Batch(int producerId, int id, long startIndex, long endIndex) {
+        this.producerId = producerId;
+        this.id = id;
+        this.startIndex = startIndex;
+        this.endIndex = endIndex;
         this.isEmpty = false;
+
+    }
+
+    public void addRecordList(LinkedList<DataRecord> recordList) {
+        this.recordList = recordList;
     }
 
     // make a empty batch
     public Batch(boolean isEmpty) {
         assert isEmpty;
-        this.ProduceId = -1;
-        this.timeStamp = -1;
+        this.id = -1;
+        this.producerId = -1;
+        this.startIndex = -1;
+        this.endIndex = -1;
         this.recordList = null;
 
         this.isEmpty = true;
     }
 
-    public int getProduceId() {
-        return ProduceId;
+    public int getId() {
+        return id;
     }
 
     public boolean isEmpty() {
         return isEmpty;
     }
 
-    public long getTimeStamp() {
-        return timeStamp;
+
+    public int getProducerId() {
+        return producerId;
     }
 
     public LinkedList<DataRecord> getRecordList() {

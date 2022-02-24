@@ -4,14 +4,19 @@ import cn.edu.ruc.tsbenchmark.client.product.ProductStatus;
 import cn.edu.ruc.tsbenchmark.config.Config;
 import cn.edu.ruc.tsbenchmark.schema.Batch;
 
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class ProductQueue extends PriorityBlockingQueue<Batch> {
     private static final Config config = Config.getInstance();
+    private final ConcurrentHashMap<Integer, List<Batch>> batchMap = new ConcurrentHashMap<>();
 
     private final ReentrantLock putLock = new ReentrantLock();
     private final Condition notFull = putLock.newCondition();
@@ -21,16 +26,17 @@ public class ProductQueue extends PriorityBlockingQueue<Batch> {
 
     private final AtomicInteger count = new AtomicInteger();
 
+    private final AtomicBoolean first = new AtomicBoolean(false);
     private final int capacity;
 
     //private final static int factor = 10000;
 
 
-     private ProductQueue() {
+    private ProductQueue() {
         super((int) config.getREASONABLE_CAPACITY(), (o1, o2) -> {
-            if (o1.getProduceId() == o2.getProduceId())
-                return o1.getTimeStamp() < o2.getTimeStamp() ? -1 : 1;
-            return o1.getProduceId() < o2.getProduceId() ? -1 : 1;
+            if (o1.getProducerId() == o2.getProducerId())
+                return o1.getId() < o2.getId() ? -1 : 1;
+            return o1.getProducerId() < o2.getProducerId() ? -1 : 1;
         });
 
         //不减1也可以，可自定义 super()创造的是优先队列的最大容量，this.capacity指 放满(put操作)导致阻塞的临界值
@@ -57,6 +63,12 @@ public class ProductQueue extends PriorityBlockingQueue<Batch> {
             while (count.get() == capacity) {
                 notFull.await();
             }
+            //将每个batch存入map中便于之后查找
+            List<Batch> list = batchMap.getOrDefault(batch.getProducerId(), new LinkedList<>());
+            list.add(batch);
+            batchMap.put(batch.getProducerId(), list);
+
+            //存入队列
             super.offer(batch);
             c = count.getAndIncrement();
             if (c + 1 < capacity)
@@ -70,7 +82,7 @@ public class ProductQueue extends PriorityBlockingQueue<Batch> {
             signalNotEmpty();
     }
 
-    @Override
+
     public Batch take() throws InterruptedException {
         Batch x;
         int c = -1;
@@ -78,12 +90,25 @@ public class ProductQueue extends PriorityBlockingQueue<Batch> {
         final ReentrantLock takeLock = this.takeLock;
         takeLock.lockInterruptibly();
         try {
+            //确保第一个元素是0 0
+            if (!first.get()) {
+                while (!first.get()) {
+                    if (peek() != null){
+                        Batch peek = peek();
+                        if (peek.getProducerId() == 0 && peek.getId() == 0)
+                            break;
+                    }
+                    notEmpty.await(100, TimeUnit.MICROSECONDS);
+                }
+                first.set(true);
+            }
+
             while (count.get() == 0) {
                 if (ProductStatus.isProductDone())
                     return new Batch(true);
                 notEmpty.await(100, TimeUnit.MICROSECONDS);
             }
-            x = super.take();
+            x = super.poll();
             c = count.getAndDecrement();
             if (c > 1)
                 notEmpty.signalAll();
@@ -114,5 +139,12 @@ public class ProductQueue extends PriorityBlockingQueue<Batch> {
         } finally {
             takeLock.unlock();
         }
+    }
+
+    public Batch getBatchByIds(int producerId, int batchId) {
+        assert batchMap.containsKey(producerId);
+        List<Batch> batchList = batchMap.get(producerId);
+        assert batchId >= 0 && batchList.size() > batchId;
+        return batchList.get(batchId);
     }
 }
