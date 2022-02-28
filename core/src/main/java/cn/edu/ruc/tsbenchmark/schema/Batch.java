@@ -42,10 +42,17 @@ public class Batch {
         return id;
     }
 
+    public long getStartIndex() {
+        return startIndex;
+    }
+
+    public long getEndIndex() {
+        return endIndex;
+    }
+
     public boolean isEmpty() {
         return isEmpty;
     }
-
 
     public int getProducerId() {
         return producerId;

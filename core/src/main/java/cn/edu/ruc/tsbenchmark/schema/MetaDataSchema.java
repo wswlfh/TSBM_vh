@@ -32,7 +32,6 @@ public class MetaDataSchema {
         initTags();
         initFields();
         initTimeSeriesTable();
-        allocateToProductClient();
     }
 
 
@@ -115,16 +114,19 @@ public class MetaDataSchema {
         //由于java语言特性，这里timeSeriesTable中为false的代表该时间戳-节点有效
         //type0: 全为false
         timeSeriesTable = new boolean[timestampList.size()][tagsList.size()];
+        allocateToProductClient();
+        timeSeriesTable = null;
     }
 
 
-    //按照生产线程id，分配指定的每个客户端的生产的batch批次，
+    //按照生产线程id，分配指定的每个生产线程的生产的batch批次(ID)
     private void allocateToProductClient() {
         long startIndex = 0, endIndex = 0;
         int batchId = 0, pId = 0;
         for (int i = 0; i < timestampList.size(); i++) {
             for (int j = 0; j < tagsList.size(); j++) {
                 if (timeSeriesTable[i][j]) continue;
+                //做好batch的schema信息，到生产时调用batch.addRecordList()添加tag和field值
                 if ((endIndex + 1) % config.getBATCH_SIZE() == 0) {
                     pId = batchId % config.getPRODUCER_NUMBER();
                     Deque<Batch> batchDeque = productMean.getOrDefault(pId, new LinkedList<>());
@@ -139,7 +141,6 @@ public class MetaDataSchema {
         //剩余的组成一个batch添加
         if (startIndex != endIndex)
             productMean.get(pId).add(new Batch(pId, batchId, startIndex, endIndex));
-        System.out.println();
     }
 
     private String getTagValue(int index) {
@@ -177,7 +178,18 @@ public class MetaDataSchema {
         return tagsList;
     }
 
+    public ArrayList<Long> getTimestampList() {
+        return timestampList;
+    }
+
     public int[] getFieldTypes() {
         return fieldTypes;
     }
+
+
+    public ConcurrentHashMap<Integer, Deque<Batch>> getProductMean() {
+        return productMean;
+    }
+
+
 }

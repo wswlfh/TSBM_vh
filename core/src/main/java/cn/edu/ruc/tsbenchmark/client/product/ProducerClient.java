@@ -7,6 +7,7 @@ import cn.edu.ruc.tsbenchmark.schema.DataRecord;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.LinkedList;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 
@@ -19,32 +20,26 @@ public class ProducerClient extends Client {
 
     @Override
     protected void execute() {
-
-        Deque<Long> timestampQueue = new LinkedList<>();
+        ArrayList<Long> timestampList = metaDataSchema.getTimestampList();
         ArrayList<String> tagsList = metaDataSchema.getTagsList();
-        LinkedList<DataRecord> recordLists = new LinkedList<>();
-        int batchId = 0;
-        boolean isLast = false;
-        while (!timestampQueue.isEmpty()) {
-            Long timestamp = timestampQueue.pop();
-            for (int i = 0; i < tagsList.size(); i++) {
-                String tagString = tagsList.get(i);
-                DataRecord record = new DataRecord(timestamp, tagString, valuesMap.get(i));
-                recordLists.add(record);
-                if (recordLists.size() == config.getBATCH_SIZE()) {
-                    if (timestampQueue.isEmpty() && i == tagsList.size() - 1)
-                        isLast = true;
-                    //productQueue.put(new Batch(this.id, batchId++, new LinkedList<>(recordLists), endIndex, isLast));
-                    recordLists.clear();
+        ConcurrentHashMap<Integer, Deque<Batch>> productMean = metaDataSchema.getProductMean();
+        Deque<Batch> batchDeque = productMean.get(this.id);
+        while (!batchDeque.isEmpty()) {
+            Batch batch = batchDeque.pop();
+            LinkedList<DataRecord> recordList = new LinkedList<>();
+            int timestampStartIndex = (int) (batch.getStartIndex() / tagsList.size()) % timestampList.size();
+            int tagStartIndex = (int) batch.getStartIndex() % tagsList.size();
+            int timestampEndIndex = (int) (batch.getEndIndex() / tagsList.size()) % timestampList.size();
+            int tagEndIndex = (int) batch.getEndIndex() % tagsList.size();
+            for (int i = timestampStartIndex; i <= timestampEndIndex; i++) {
+                Long timestamp = timestampList.get(i);
+                for (int j = tagStartIndex; j <= tagEndIndex; j++) {
+                    String tagString = tagsList.get(j);
+                    recordList.add(new DataRecord(timestamp, tagString, valuesMap.get(i + j)));
                 }
             }
-        }
-//        if (recordLists.size() != 0)
-//            productQueue.put(new Batch(this.id, batchId, new LinkedList<>(recordLists), endIndex, true));
-        try {
-            Thread.sleep(1000L);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+            batch.addRecordList(recordList);
+            productQueue.put(batch);
         }
         ProductStatus.setStatusById(this.id);
     }

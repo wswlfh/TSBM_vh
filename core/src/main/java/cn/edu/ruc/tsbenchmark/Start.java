@@ -16,9 +16,6 @@ import java.util.concurrent.Executors;
 
 public class Start {
     private static final Config config = Config.getInstance();
-    private static final MetaDataSchema metaDataSchema = MetaDataSchema.getInstance();
-
-    private static final ProductQueue productQueue = ProductQueue.getInstance();
 
     private static void initThread() {
         ExecutorService executorService = Executors.newFixedThreadPool(
@@ -55,15 +52,8 @@ public class Start {
 
 
     public static void main(String[] args) {
-        Result.putResult("PRODUCER_NUMBER",config.getPRODUCER_NUMBER()+"");
-        Result.putResult("CONSUMER_NUMBER",config.getCONSUMER_NUMBER()+"");
-        Result.putResult("Number of time series", config.getTAG_TOTAL() + "");
-        Result.putResult("Number of time tag", metaDataSchema.getTagNames().length + "");
-        Result.putResult("Number of time field", metaDataSchema.getFieldSchema().length + "");
-        Result.putResult("Number of theoretical insert records", config.getTHEORETICAL_SIZE() + "");
-
+        Result.before();
         initThread();
-
         Result.printResult();
         System.exit(0);
     }

@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -26,21 +25,31 @@ public class ProductQueue extends PriorityBlockingQueue<Batch> {
 
     private final AtomicInteger count = new AtomicInteger();
 
-    private final AtomicBoolean first = new AtomicBoolean(false);
-    private final int capacity;
+    private final AtomicInteger expectedId = new AtomicInteger(0);
 
-    //private final static int factor = 10000;
+    //private transient Object[] queue;
+    private final int capacity;
 
 
     private ProductQueue() {
         super((int) config.getREASONABLE_CAPACITY(), (o1, o2) -> {
-            if (o1.getProducerId() == o2.getProducerId())
-                return o1.getId() < o2.getId() ? -1 : 1;
-            return o1.getProducerId() < o2.getProducerId() ? -1 : 1;
+            return o1.getId() - o2.getId();
         });
 
         //不减1也可以，可自定义 super()创造的是优先队列的最大容量，this.capacity指 放满(put操作)导致阻塞的临界值
         this.capacity = (int) config.getREASONABLE_CAPACITY() - 1;
+
+        //拿到底层queue数组 反射父类获取
+//        Class<?> clazz = this.getClass().getSuperclass();
+//        Field field = null;
+//        try {
+//            field = clazz.getDeclaredField("queue");
+//            field.setAccessible(true);
+//            queue = (Object[]) field.get(this);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+
 
     }
 
@@ -90,24 +99,19 @@ public class ProductQueue extends PriorityBlockingQueue<Batch> {
         final ReentrantLock takeLock = this.takeLock;
         takeLock.lockInterruptibly();
         try {
-            //确保第一个元素是0 0
-            if (!first.get()) {
-                while (!first.get()) {
-                    if (peek() != null){
-                        Batch peek = peek();
-                        if (peek.getProducerId() == 0 && peek.getId() == 0)
-                            break;
-                    }
-                    notEmpty.await(100, TimeUnit.MICROSECONDS);
-                }
-                first.set(true);
-            }
-
+            //确保有元素
             while (count.get() == 0) {
                 if (ProductStatus.isProductDone())
                     return new Batch(true);
-                notEmpty.await(100, TimeUnit.MICROSECONDS);
+                notEmpty.await(10, TimeUnit.MICROSECONDS);
             }
+
+            //确保能够连续取出
+            while (peek().getId() != expectedId.get()) {
+                notEmpty.await(10, TimeUnit.MICROSECONDS);
+            }
+            expectedId.incrementAndGet();
+
             x = super.poll();
             c = count.getAndDecrement();
             if (c > 1)

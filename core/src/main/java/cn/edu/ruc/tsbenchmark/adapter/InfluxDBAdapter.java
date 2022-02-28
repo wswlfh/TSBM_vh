@@ -42,9 +42,10 @@ public class InfluxDBAdapter extends Adapter {
         }
 
         //setDatabase
-        if (!influxDB.databaseExists(InfluxInfo.DATABASE)) {
+        if (influxDB.databaseExists(InfluxInfo.DATABASE))
+            influxDB.deleteDatabase(InfluxInfo.DATABASE);  //数据清理(之前如果存在，则清理旧数据)
+        else
             influxDB.createDatabase(InfluxInfo.DATABASE);
-        }
         influxDB.setDatabase(InfluxInfo.DATABASE);
 
         //createRetentionPolicy
@@ -59,46 +60,49 @@ public class InfluxDBAdapter extends Adapter {
 
     @Override
     public long insertData(Batch data) {
-        if (data.isEmpty())
-            return -1;
-        //pre
-        StringBuilder insertQL = new StringBuilder();
-        String[] fieldSchema = metaDataSchema.getFieldSchema();
-        LinkedList<DataRecord> recordList = data.getRecordList();
-        LinkedList<String> list = new LinkedList<>();
 
-        //take
-        while (!recordList.isEmpty()) {
-            insertQL.append(measurement).append(',');
-            DataRecord record = recordList.removeFirst();
-            //tag
-            insertQL.append(record.getTagString()).append(' ');
-
-            //field
-            Object[] fieldsValue = record.getFieldsValue();
-            for (int i = 0; i < fieldsValue.length; i++) {
-                insertQL.append(fieldSchema[i]).append('=');
-                if (fieldsValue[i] instanceof Integer)
-                    insertQL.append(fieldsValue[i]).append('i');
-                else if (fieldsValue[i] instanceof String)
-                    insertQL.append('"').append(fieldsValue[i]).append('"');
-                else if (fieldsValue[i] instanceof Double || fieldsValue[i] instanceof Boolean)
-                    insertQL.append(fieldsValue[i]);
-                else throw new IllegalArgumentException("Datatype unsupported in incluxdb");
-                insertQL.append(',');
-
-            }
-            //time 先去掉最后一个逗号
-            insertQL.deleteCharAt(insertQL.length() - 1);
-            insertQL.append(' ').append(record.getTimeStamp());
-            list.add(insertQL.toString());
-            insertQL.setLength(0);
-        }
-        //calculate
-        long start = System.currentTimeMillis();
-        influxDB.write(list);
-        long end = System.currentTimeMillis();
-        return end - start;
+        System.out.println(data.getId());
+        return 0;
+//        if (data.isEmpty())
+//            return -1;
+//        //pre
+//        StringBuilder insertQL = new StringBuilder();
+//        String[] fieldSchema = metaDataSchema.getFieldSchema();
+//        LinkedList<DataRecord> recordList = data.getRecordList();
+//        LinkedList<String> list = new LinkedList<>();
+//
+//        //take
+//        while (!recordList.isEmpty()) {
+//            insertQL.append(measurement).append(',');
+//            DataRecord record = recordList.removeFirst();
+//            //tag
+//            insertQL.append(record.getTagString()).append(' ');
+//
+//            //field
+//            Object[] fieldsValue = record.getFieldsValue();
+//            for (int i = 0; i < fieldsValue.length; i++) {
+//                insertQL.append(fieldSchema[i]).append('=');
+//                if (fieldsValue[i] instanceof Integer)
+//                    insertQL.append(fieldsValue[i]).append('i');
+//                else if (fieldsValue[i] instanceof String)
+//                    insertQL.append('"').append(fieldsValue[i]).append('"');
+//                else if (fieldsValue[i] instanceof Double || fieldsValue[i] instanceof Boolean)
+//                    insertQL.append(fieldsValue[i]);
+//                else throw new IllegalArgumentException("Datatype unsupported in incluxdb");
+//                insertQL.append(',');
+//
+//            }
+//            //time 先去掉最后一个逗号
+//            insertQL.deleteCharAt(insertQL.length() - 1);
+//            insertQL.append(' ').append(record.getTimeStamp());
+//            list.add(insertQL.toString());
+//            insertQL.setLength(0);
+//        }
+//        //calculate
+//        long start = System.currentTimeMillis();
+//        influxDB.write(list);
+//        long end = System.currentTimeMillis();
+//        return end - start;
     }
 
     @Override
