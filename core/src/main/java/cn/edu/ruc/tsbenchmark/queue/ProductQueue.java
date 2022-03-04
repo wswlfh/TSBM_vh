@@ -1,6 +1,6 @@
-package cn.edu.ruc.tsbenchmark.collection;
+package cn.edu.ruc.tsbenchmark.queue;
 
-import cn.edu.ruc.tsbenchmark.client.product.ProductStatus;
+import cn.edu.ruc.tsbenchmark.client.product.Status;
 import cn.edu.ruc.tsbenchmark.config.Config;
 import cn.edu.ruc.tsbenchmark.schema.Batch;
 
@@ -101,18 +101,23 @@ public class ProductQueue extends PriorityBlockingQueue<Batch> {
         try {
             //确保有元素
             while (count.get() == 0) {
-                if (ProductStatus.isProductDone())
+                if (Status.isProductDone())
                     return new Batch(true);
                 notEmpty.await(10, TimeUnit.MICROSECONDS);
             }
 
             //确保能够连续取出
-            while (peek().getId() != expectedId.get()) {
-                notEmpty.await(10, TimeUnit.MICROSECONDS);
+            while (true) {
+                if (peek() == null) {
+                    notEmpty.await(10, TimeUnit.MICROSECONDS);
+                    continue;
+                }
+                if (peek().getId() == expectedId.get())
+                    break;
             }
-            expectedId.incrementAndGet();
 
-            x = super.poll();
+            expectedId.incrementAndGet();
+            x = super.take();
             c = count.getAndDecrement();
             if (c > 1)
                 notEmpty.signalAll();

@@ -15,9 +15,11 @@ public class MetaDataSchema {
     private final ArrayList<Long> timestampList = new ArrayList<>();
     private boolean[][] timeSeriesTable;
     private final ConcurrentHashMap<Integer, Deque<Batch>> productMean = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Integer, Boolean> batchStatus = new ConcurrentHashMap<>(); //记录每个batch的写入情况
     private int[] fieldTypes; //0:Integer  1:Double  2:Long  3:Boolean  4:String  5:Date
     private int[] fieldProportion;
     private String[] fieldSchema;
+    private int batchTotal;
 
 
     private static class SchemaHolder {
@@ -133,7 +135,7 @@ public class MetaDataSchema {
                     batchDeque.add(new Batch(pId, batchId, startIndex, endIndex));
                     productMean.put(pId, batchDeque);
                     startIndex = endIndex + 1;
-                    batchId++;
+                    batchStatus.put(batchId++, false); //false表示：此batch未写入到db
                 }
                 endIndex++;
             }
@@ -141,6 +143,9 @@ public class MetaDataSchema {
         //剩余的组成一个batch添加
         if (startIndex != endIndex)
             productMean.get(pId).add(new Batch(pId, batchId, startIndex, endIndex));
+
+        batchStatus.put(batchId, false);
+        batchTotal = startIndex == endIndex ? batchId - 1 : batchId;
     }
 
     private String getTagValue(int index) {
@@ -191,5 +196,11 @@ public class MetaDataSchema {
         return productMean;
     }
 
+    public int getBatchTotal() {
+        return batchTotal;
+    }
 
+    public ConcurrentHashMap<Integer, Boolean> getBatchStatus() {
+        return batchStatus;
+    }
 }

@@ -15,8 +15,6 @@ public class Config {
 
     private int BATCH_SIZE;
 
-    private int DEVICE_NUMBER;
-
     private int TAG_TOTAL;
 
 
@@ -58,7 +56,6 @@ public class Config {
             this.CONSUMER_NUMBER = Integer.parseInt(properties.getProperty("CONSUMER_NUMBER", ""));
 
             this.BATCH_SIZE = Integer.parseInt(properties.getProperty("BATCH_SIZE", ""));
-            this.DEVICE_NUMBER = Integer.parseInt(properties.getProperty("DEVICE_NUMBER", ""));
             this.TAG_TOTAL = Integer.parseInt(properties.getProperty("TAG_TOTAL", ""));
             this.TAG_NAME = properties.getProperty("TAG_NAME", "");
             this.TAG_PROPORTION = properties.getProperty("TAG_PROPORTION", "");
@@ -94,6 +91,7 @@ public class Config {
     }
 
 
+
     public int getPRODUCER_NUMBER() {
         return PRODUCER_NUMBER;
     }
@@ -104,10 +102,6 @@ public class Config {
 
     public int getBATCH_SIZE() {
         return BATCH_SIZE;
-    }
-
-    public int getDEVICE_NUMBER() {
-        return DEVICE_NUMBER;
     }
 
     public int getTAG_TOTAL() {

@@ -3,10 +3,8 @@ package cn.edu.ruc.tsbenchmark;
 import cn.edu.ruc.tsbenchmark.client.Client;
 import cn.edu.ruc.tsbenchmark.client.consumer.ConsumerClient;
 import cn.edu.ruc.tsbenchmark.client.product.ProducerClient;
-import cn.edu.ruc.tsbenchmark.collection.ProductQueue;
 import cn.edu.ruc.tsbenchmark.config.Config;
-import cn.edu.ruc.tsbenchmark.result.Result;
-import cn.edu.ruc.tsbenchmark.schema.MetaDataSchema;
+import cn.edu.ruc.tsbenchmark.utils.ResultUtils;
 
 import java.util.LinkedList;
 import java.util.concurrent.CountDownLatch;
@@ -47,14 +45,14 @@ public class Start {
             Thread.currentThread().interrupt();
         }
         long end = System.currentTimeMillis();
-        Result.putResult("The whole test process takes ", (end - start) / 1000 + "s");
+        ResultUtils.putResult("The whole test process takes ", (end - start) / 1000 + "s");
     }
 
 
     public static void main(String[] args) {
-        Result.before();
+        ResultUtils.before();
         initThread();
-        Result.printResult();
+        ResultUtils.printResult();
         System.exit(0);
     }
 }

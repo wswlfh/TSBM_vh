@@ -41,7 +41,7 @@ public class ProducerClient extends Client {
             batch.addRecordList(recordList);
             productQueue.put(batch);
         }
-        ProductStatus.setStatusById(this.id);
+        Status.setProductStatusById(this.id);
     }
 
 //    protected void execute() {

@@ -1,20 +1,19 @@
-package cn.edu.ruc.tsbenchmark.map;
+package cn.edu.ruc.tsbenchmark.utils;
 
 import cn.edu.ruc.tsbenchmark.config.Config;
 import cn.edu.ruc.tsbenchmark.schema.MetaDataSchema;
-import cn.edu.ruc.tsbenchmark.utils.DateUtils;
 
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
-public class ValuesMap extends ConcurrentHashMap<Integer, Object[]> {
+public class ValuesUtils extends ConcurrentHashMap<Integer, Object[]> {
     private static final Config config = Config.getInstance();
     private static final int[] fieldTypes = MetaDataSchema.getInstance().getFieldTypes();
     private static final int capacity = Math.min((int) (config.getTHEORETICAL_SIZE() / 60), 10000000);
 
-    private ValuesMap() {
+    private ValuesUtils() {
         super(capacity);
         System.out.println(DateUtils.getDate() + " Start Continuously generate " + capacity + " pieces of random values and insert them into the valuesMap.............\n");
         long start = System.currentTimeMillis();
@@ -32,11 +31,11 @@ public class ValuesMap extends ConcurrentHashMap<Integer, Object[]> {
     }
 
     private static class ValuesMapsHolder {
-        private static final ValuesMap INSTANCE = new ValuesMap();
+        private static final ValuesUtils INSTANCE = new ValuesUtils();
     }
 
-    public static ValuesMap getInstance() {
-        return ValuesMap.ValuesMapsHolder.INSTANCE;
+    public static ValuesUtils getInstance() {
+        return ValuesUtils.ValuesMapsHolder.INSTANCE;
     }
 
 

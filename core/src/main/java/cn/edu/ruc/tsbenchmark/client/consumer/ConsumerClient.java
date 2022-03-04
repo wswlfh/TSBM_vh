@@ -3,8 +3,8 @@ package cn.edu.ruc.tsbenchmark.client.consumer;
 import cn.edu.ruc.tsbenchmark.adapter.Adapter;
 import cn.edu.ruc.tsbenchmark.adapter.InfluxDBAdapter;
 import cn.edu.ruc.tsbenchmark.client.Client;
-import cn.edu.ruc.tsbenchmark.result.Result;
 import cn.edu.ruc.tsbenchmark.schema.Batch;
+import cn.edu.ruc.tsbenchmark.utils.ResultUtils;
 
 import java.util.LinkedList;
 import java.util.concurrent.CountDownLatch;
@@ -42,17 +42,16 @@ public class ConsumerClient extends Client {
                 if (batch.isEmpty()) {
                     adapter.closeConnection();
                     writeResult();
-                    System.out.println("the whole test is done!");
                     break;
                 }
                 //print progress
                 long progress = 100 * recordNum.addAndGet(batch.getRecordList().size()) / config.getTHEORETICAL_SIZE();
-                if (progressList.getFirst() == progress) {
+                if (!progressList.isEmpty() && progressList.getFirst() == progress) {
                     progressList.removeFirst();
                     System.out.println("the whole test is " + progress + "%");
                 }
 
-                long time = adapter.insertData(batch);
+                long time = adapter.insert(batch);
                 costTime.addAndGet(time);
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -61,10 +60,10 @@ public class ConsumerClient extends Client {
     }
 
     private void writeResult() {
-        Result.putResult("cost time", costTime.get() + " ms");
+        ResultUtils.putResult("cost time", costTime.get() + " ms");
         //Result.putResult("Number of records actually inserted", adapter.getCount() + "");
-        Result.putResult("write record speed", recordNum.get() * 1000.0 / costTime.get() + " record/s");
-        Result.putResult("write point speed", recordNum.get() * 1000.0 / costTime.get() *
+        ResultUtils.putResult("write record speed", recordNum.get() * 1000.0 / costTime.get() + " record/s");
+        ResultUtils.putResult("write point speed", recordNum.get() * 1000.0 / costTime.get() *
                 (metaDataSchema.getFieldSchema().length) + " point/s");
 
     }

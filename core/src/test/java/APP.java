@@ -141,4 +141,10 @@ public class APP {
         System.out.println(end - start + "ms");
     }
 
+    @Test
+    public void test10() {
+        Class<APP> appClass = APP.class;
+        
+    }
+
 }

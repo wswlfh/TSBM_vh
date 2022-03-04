@@ -101,6 +101,11 @@ public class InfluxdbTest {
         System.out.println(Long.parseLong(res.split("\\.")[0]));
     }
 
+    @Test
+    public void dropDatabase(){
+        influxDB.deleteDatabase(database);
+    }
+
     @After
     public void closeConnection() {
         influxDB.close();

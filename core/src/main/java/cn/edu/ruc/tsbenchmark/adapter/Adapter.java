@@ -4,6 +4,9 @@ import cn.edu.ruc.tsbenchmark.config.Config;
 import cn.edu.ruc.tsbenchmark.schema.Batch;
 import cn.edu.ruc.tsbenchmark.schema.MetaDataSchema;
 
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.FutureTask;
+
 public abstract class Adapter {
     /**
      * Adapter for database IO.
@@ -48,10 +51,33 @@ public abstract class Adapter {
      *
      * @return timeout, if request failed, please return -1;
      */
-    public abstract long insertData(Batch data);
+    protected abstract long insertData(Batch data);
 
     public abstract void closeConnection();
 
-    public abstract long getCount();
+
+    public long insert(Batch data) {
+        int id = data.getId();
+        ConcurrentHashMap<Integer, Boolean> batchStatus = metaDataSchema.getBatchStatus();
+        //保证写入顺序
+        if (id != 0) {
+            while (true) {
+                if (batchStatus.get(id - 1)) break;
+            }
+        }
+        FutureTask<Long> futureTask = new FutureTask<>(() -> insertData(data));
+        new Thread(futureTask).start();
+        batchStatus.put(id, true);
+        long res = 0;
+        try {
+            res = futureTask.get();
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Insert error!");
+            System.exit(-1);
+        }
+        return res;
+    }
+
 
 }
