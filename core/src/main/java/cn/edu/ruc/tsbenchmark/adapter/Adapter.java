@@ -6,6 +6,7 @@ import cn.edu.ruc.tsbenchmark.schema.MetaDataSchema;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
 
 public abstract class Adapter {
     /**

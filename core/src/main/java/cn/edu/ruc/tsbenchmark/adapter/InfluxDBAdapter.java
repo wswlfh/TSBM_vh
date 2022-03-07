@@ -15,6 +15,7 @@ public class InfluxDBAdapter extends Adapter {
     private InfluxDB influxDB;
     private final String measurement = "ruc_test";
 
+
     public InfluxDBAdapter() {
         super();
     }
@@ -27,9 +28,7 @@ public class InfluxDBAdapter extends Adapter {
                 .readTimeout(500000, TimeUnit.MILLISECONDS)
                 .connectTimeout(50000, TimeUnit.MILLISECONDS)
                 .writeTimeout(500000, TimeUnit.MILLISECONDS);
-
         influxDB = InfluxDBFactory.connect(url, InfluxInfo.USERNAME, InfluxInfo.PASSWORD, builder);
-
         //ping test
         try {
             influxDB.ping();
@@ -40,10 +39,13 @@ public class InfluxDBAdapter extends Adapter {
         }
 
         //setDatabase
-        if (influxDB.databaseExists(InfluxInfo.DATABASE))
-            influxDB.deleteDatabase(InfluxInfo.DATABASE);  //数据清理(之前如果存在，则清理旧数据)
-        else
-            influxDB.createDatabase(InfluxInfo.DATABASE);
+
+        //加上这段会发生 java.net.SocketException: Broken pipe (Write failed)，未知原因
+//        if (influxDB.databaseExists(InfluxInfo.DATABASE))
+//            influxDB.deleteDatabase(InfluxInfo.DATABASE);  //数据清理(之前如果存在，则清理旧数据)
+//        else
+        //influxDB.deleteDatabase(InfluxInfo.DATABASE);
+        influxDB.createDatabase(InfluxInfo.DATABASE);
         influxDB.setDatabase(InfluxInfo.DATABASE);
 
         //createRetentionPolicy
@@ -51,14 +53,12 @@ public class InfluxDBAdapter extends Adapter {
             influxDB.createRetentionPolicy("myRP",
                     InfluxInfo.DATABASE, InfluxInfo.DURATION, InfluxInfo.SHARD_DURATION,
                     Integer.parseInt(InfluxInfo.REPLICATION), false);
-
-
     }
 
 
     @Override
     protected long insertData(Batch data) {
-        System.out.println("batchId=" + data.getId() + " " + Thread.currentThread().getName());
+        //System.out.println("batchId=" + data.getId() + " " + Thread.currentThread().getName());
         if (data.isEmpty())
             return -1;
         //pre
@@ -115,4 +115,5 @@ public class InfluxDBAdapter extends Adapter {
     public void closeConnection() {
         influxDB.close();
     }
+
 }

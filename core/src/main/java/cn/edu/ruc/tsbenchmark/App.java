@@ -12,17 +12,19 @@ import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class Start {
+public class App {
     private static final Config config = Config.getInstance();
 
-    private static void initThread() {
+    private static void start() {
+        //before
+        ResultUtils.before();
+
+        //Thread init
         ExecutorService executorService = Executors.newFixedThreadPool(
                 config.getPRODUCER_NUMBER() + config.getCONSUMER_NUMBER());
-
         CountDownLatch downLatch = new CountDownLatch(config.getPRODUCER_NUMBER() + config.getCONSUMER_NUMBER());
         CyclicBarrier barrier = new CyclicBarrier(config.getPRODUCER_NUMBER() + config.getCONSUMER_NUMBER());
         LinkedList<Client> clients = new LinkedList<>();
-
         for (int i = 0; i < config.getPRODUCER_NUMBER(); i++) {
             Client client = new ProducerClient(i, downLatch, barrier);
             clients.add(client);
@@ -33,7 +35,6 @@ public class Start {
         }
 
         long start = System.currentTimeMillis();
-
         for (Client client : clients) {
             executorService.submit(client);
         }
@@ -46,12 +47,12 @@ public class Start {
         }
         long end = System.currentTimeMillis();
         ResultUtils.putResult("The whole test process takes ", (end - start) / 1000 + "s");
+        ResultUtils.after();
     }
 
 
     public static void main(String[] args) {
-        ResultUtils.before();
-        initThread();
+        start();
         ResultUtils.printResult();
         System.exit(0);
     }

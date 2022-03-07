@@ -6,23 +6,19 @@ import cn.edu.ruc.tsbenchmark.client.Client;
 import cn.edu.ruc.tsbenchmark.schema.Batch;
 import cn.edu.ruc.tsbenchmark.utils.ResultUtils;
 
-import java.util.LinkedList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class ConsumerClient extends Client {
 
     private final Adapter adapter;
-    private final AtomicLong costTime = new AtomicLong(0);
-    private static final AtomicLong recordNum = new AtomicLong(0);
-    private static final LinkedList<Long> progressList = new LinkedList<>();
+
+
+    private static final boolean[] progress = new boolean[101];
 
     public ConsumerClient(int id, CountDownLatch countDownLatch, CyclicBarrier barrier) {
         super(id, countDownLatch, barrier);
         adapter = new InfluxDBAdapter();
-        for (long i = 0; i < 100; i++)
-            progressList.add(i);
     }
 
     @Override
@@ -41,33 +37,24 @@ public class ConsumerClient extends Client {
                 Batch batch = productQueue.take();
                 if (batch.isEmpty()) {
                     adapter.closeConnection();
-                    writeResult();
                     break;
                 }
+
                 //print progress
-                long progress = 100 * recordNum.addAndGet(batch.getRecordList().size()) / config.getTHEORETICAL_SIZE();
-                if (!progressList.isEmpty() && progressList.getFirst() == progress) {
-                    progressList.removeFirst();
-                    System.out.println("the whole test is " + progress + "%");
+                int i = 100 * batch.getId() / metaDataSchema.getBatchTotal();
+                if (!progress[i]) {
+                    System.out.println("the whole test is " + i + "%");
+                    progress[i] = true;
                 }
 
-                long time = adapter.insert(batch);
-                costTime.addAndGet(time);
+                ResultUtils.addRecord(id, batch.getRecordList().size());
+                int time = (int) adapter.insert(batch);
+                ResultUtils.addCostTime(id, time);
+
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
     }
-
-    private void writeResult() {
-        ResultUtils.putResult("cost time", costTime.get() + " ms");
-        //Result.putResult("Number of records actually inserted", adapter.getCount() + "");
-        ResultUtils.putResult("write record speed", recordNum.get() * 1000.0 / costTime.get() + " record/s");
-        ResultUtils.putResult("write point speed", recordNum.get() * 1000.0 / costTime.get() *
-                (metaDataSchema.getFieldSchema().length) + " point/s");
-
-    }
-
-
 }
 

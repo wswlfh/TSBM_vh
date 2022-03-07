@@ -16,6 +16,7 @@ public class MetaDataSchema {
     private boolean[][] timeSeriesTable;
     private final ConcurrentHashMap<Integer, Deque<Batch>> productMean = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<Integer, Boolean> batchStatus = new ConcurrentHashMap<>(); //记录每个batch的写入情况
+
     private int[] fieldTypes; //0:Integer  1:Double  2:Long  3:Boolean  4:String  5:Date
     private int[] fieldProportion;
     private String[] fieldSchema;
